@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenArt Enterprise Battle Cards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #090a0a;
+      --surface: #141414;
+      --surface-hover: #1e1e1e;
+      --border: #2a2a2a;
+      --text: #ffffff;
+      --text-secondary: #b0b4ba;
+      --text-muted: #6b7280;
+      --green: #16d866;
+      --green-glow: rgba(22, 216, 102, 0.15);
+      --green-dark: #0fa84e;
+      --red: #ef4444;
+      --red-glow: rgba(239, 68, 68, 0.15);
+      --amber: #f59e0b;
+      --amber-glow: rgba(245, 158, 11, 0.15);
+      --radius: 12px;
+      --radius-lg: 20px;
+      --radius-pill: 46px;
+      --font-heading: 'Bricolage Grotesque', sans-serif;
+      --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* AUTH GATE */
+    .auth-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 24px;
+    }
+    .auth-overlay.hidden { display: none; }
+    .auth-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 40px;
+      max-width: 420px; width: 90%;
+      text-align: center;
+    }
+    .auth-box h2 {
+      font-family: var(--font-heading);
+      font-size: 24px; font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .auth-box p {
+      color: var(--text-secondary);
+      font-size: 14px; margin-bottom: 24px;
+    }
+    .auth-input {
+      width: 100%; padding: 12px 16px;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      font-size: 16px; font-family: var(--font-body);
+      margin-bottom: 16px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .auth-input:focus { border-color: var(--green); }
+    .auth-input.error { border-color: var(--red); }
+    .auth-error {
+      color: var(--red); font-size: 13px;
+      margin-top: -8px; margin-bottom: 16px;
+      display: none;
+    }
+    .auth-error.visible { display: block; }
+    .auth-btn {
+      width: 100%; padding: 14px;
+      background: var(--green); color: #000;
+      border: none; border-radius: var(--radius-pill);
+      font-size: 16px; font-weight: 700;
+      font-family: var(--font-body);
+      cursor: pointer; transition: background 0.2s;
+    }
+    .auth-btn:hover { background: var(--green-dark); }
+    .auth-logo {
+      font-family: var(--font-heading);
+      font-size: 20px; font-weight: 700;
+      margin-bottom: 24px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .auth-logo span { color: var(--green); }
+
+    .app-content { display: none; }
+    .app-content.visible { display: block; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(9,10,10,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 12px;
+      text-decoration: none; color: var(--text);
+    }
+    .nav-logo span {
+      font-family: var(--font-heading);
+      font-weight: 700; font-size: 18px;
+    }
+    .nav-links { display: flex; gap: 8px; }
+    .nav-links a {
+      color: var(--text-secondary); text-decoration: none;
+      padding: 8px 16px; border-radius: var(--radius-pill);
+      font-size: 14px; font-weight: 500; transition: all 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--surface); }
+    .nav-cta {
+      background: var(--green) !important; color: #000 !important;
+      font-weight: 600 !important;
+    }
+    .nav-cta:hover { background: var(--green-dark) !important; }
+
+    /* HERO */
+    .hero {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+      padding: 120px 2rem 60px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(22,216,102,0.06) 0%, transparent 60%);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--green-glow); color: var(--green);
+      padding: 6px 16px; border-radius: var(--radius-pill);
+      font-size: 13px; font-weight: 600;
+      margin-bottom: 2rem; border: 1px solid rgba(22,216,102,0.2);
+    }
+    .hero h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 800; line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, #fff 0%, #b0b4ba 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--green) 0%, #4ade80 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      font-size: clamp(16px, 2vw, 20px);
+      color: var(--text-secondary);
+      max-width: 640px; margin: 0 auto 3rem;
+    }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--green); color: #000;
+      padding: 14px 32px; border-radius: var(--radius-pill);
+      font-size: 16px; font-weight: 700; text-decoration: none;
+      transition: all 0.2s; border: none; cursor: pointer;
+    }
+    .btn-primary:hover { background: var(--green-dark); transform: translateY(-1px); }
+
+    /* STATS */
+    .stats {
+      display: flex; gap: 48px; justify-content: center;
+      margin-top: 4rem; padding-top: 3rem;
+      border-top: 1px solid var(--border);
+    }
+    .stat { text-align: center; }
+    .stat-value {
+      font-family: var(--font-heading);
+      font-size: 28px; font-weight: 700; color: var(--green);
+    }
+    .stat-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    /* SECTION */
+    .section {
+      padding: 80px 2rem;
+      max-width: 1200px; margin: 0 auto;
+    }
+    .section h2 {
+      font-family: var(--font-heading);
+      font-size: 36px; font-weight: 700;
+      text-align: center; margin-bottom: 1rem;
+    }
+    .section > .section-sub {
+      color: var(--text-secondary);
+      text-align: center; max-width: 600px;
+      margin: 0 auto 3rem; font-size: 16px;
+    }
+    .divider {
+      border: none; border-top: 1px solid var(--border);
+      max-width: 1200px; margin: 0 auto;
+    }
+
+    /* WHY OPENART WINS CARDS */
+    .wins-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .win-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      transition: all 0.3s;
+    }
+    .win-card:hover {
+      border-color: var(--green);
+      background: var(--surface-hover);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(22,216,102,0.08);
+    }
+    .win-icon {
+      width: 48px; height: 48px;
+      background: var(--green-glow);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 16px;
+    }
+    .win-card h3 {
+      font-family: var(--font-heading);
+      font-size: 20px; font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .win-card p {
+      font-size: 14px; color: var(--text-secondary); line-height: 1.7;
+    }
+
+    /* COMPETITOR GRID */
+    .competitor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .comp-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      transition: all 0.3s;
+      text-decoration: none; color: var(--text);
+      display: flex; flex-direction: column;
+    }
+    .comp-card:hover {
+      border-color: var(--green);
+      background: var(--surface-hover);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(22,216,102,0.08);
+    }
+    .comp-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .comp-card h3 {
+      font-family: var(--font-heading);
+      font-size: 20px; font-weight: 700;
+    }
+    .comp-badge {
+      font-size: 11px; font-weight: 600;
+      padding: 4px 10px; border-radius: 8px;
+      white-space: nowrap;
+    }
+    .badge-red {
+      background: var(--red-glow); color: var(--red);
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+    .badge-amber {
+      background: var(--amber-glow); color: var(--amber);
+      border: 1px solid rgba(245,158,11,0.2);
+    }
+    .comp-achilles {
+      font-size: 14px; color: var(--text-secondary);
+      margin-bottom: 12px; flex: 1;
+    }
+    .comp-edge {
+      font-size: 13px; color: var(--green);
+      font-weight: 500; margin-bottom: 16px;
+    }
+    .comp-link {
+      font-size: 14px; font-weight: 600;
+      color: var(--text); display: flex; align-items: center; gap: 6px;
+      transition: color 0.2s;
+    }
+    .comp-card:hover .comp-link { color: var(--green); }
+
+    /* OVERVIEW / PITCH */
+    .pitch-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      max-width: 800px; margin: 0 auto 3rem;
+      font-size: 16px; line-height: 1.8;
+      color: var(--text-secondary);
+      border-left: 3px solid var(--green);
+    }
+    .pitch-box strong { color: var(--text); }
+
+    /* ACCORDION */
+    details {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      max-width: 800px; margin-left: auto; margin-right: auto;
+      margin-bottom: 8px;
+    }
+    details[open] { border-color: var(--green); }
+    summary {
+      padding: 16px 20px;
+      cursor: pointer; font-weight: 600;
+      font-size: 15px;
+      list-style: none;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::after {
+      content: '+'; font-size: 18px; color: var(--text-muted);
+      transition: transform 0.2s;
+    }
+    details[open] summary::after { content: '−'; color: var(--green); }
+    .accordion-body {
+      padding: 0 20px 16px;
+      font-size: 14px; color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .accordion-body strong { color: var(--text); }
+
+    /* USER QUOTE */
+    .user-quote {
+      font-size: 15px; color: var(--text-secondary);
+      font-style: italic; text-align: center;
+      max-width: 640px; margin: -1rem auto 3rem;
+    }
+    .user-quote cite {
+      display: block; font-style: normal;
+      font-size: 13px; color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem 2rem; text-align: center;
+    }
+    .footer-links {
+      display: flex; gap: 24px; justify-content: center;
+      margin-bottom: 1.5rem; flex-wrap: wrap;
+    }
+    .footer-links a {
+      color: var(--text-muted); text-decoration: none;
+      font-size: 14px; transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--green); }
+    .footer-copy { font-size: 13px; color: var(--text-muted); }
+    .footer-confidential {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--red-glow); color: var(--red);
+      padding: 4px 12px; border-radius: var(--radius-pill);
+      font-size: 12px; font-weight: 600;
+      margin-top: 12px; border: 1px solid rgba(239,68,68,0.2);
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      nav { padding: 0 1rem; }
+      .nav-links { display: none; }
+      .hero { padding: 100px 1.5rem 40px; }
+      .stats { gap: 24px; flex-wrap: wrap; }
+      .section { padding: 60px 1.5rem; }
+      .wins-grid, .competitor-grid { grid-template-columns: 1fr; }
+      .auth-box { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <svg width="28" height="28" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="48" stroke="#16d866" stroke-width="4"/><path d="M30 50 L45 65 L70 35" stroke="#16d866" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+      OpenArt <span>Battle Cards</span>
+    </div>
+    <h2>Internal Access</h2>
+    <p>Enter the password to access battle card materials.</p>
+    <input type="password" class="auth-input" id="authInput" placeholder="Password" autocomplete="off">
+    <div class="auth-error" id="authError">Incorrect password. Please try again.</div>
+    <button class="auth-btn" id="authBtn">Access Battle Cards</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="app-content" id="appContent">
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <svg width="28" height="28" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="48" stroke="#16d866" stroke-width="4"/><path d="M30 50 L45 65 L70 35" stroke="#16d866" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+    <span>OpenArt <span style="color: var(--green);">Battle Cards</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="#competitors">Competitors</a>
+    <a href="#overview">Overview</a>
+    <a href="https://openart.ai" target="_blank" class="nav-cta">openart.ai</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    Enterprise Sales Resource
+  </div>
+  <h1>OpenArt Enterprise<br><em>Battle Cards</em></h1>
+  <p>The AI creative platform that 230,000 people pay for and love. 100+ models, fastest engineering team, $1M IP indemnification.</p>
+  <a href="#why-wins" class="btn-primary">
+    View Overview
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </a>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value">8M</div>
+      <div class="stat-label">Monthly Active Users</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">230K+</div>
+      <div class="stat-label">Paying Subscribers</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">100+</div>
+      <div class="stat-label">AI Models</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">$70M</div>
+      <div class="stat-label">ARR</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- WHY OPENART WINS -->
+<section class="section" id="why-wins">
+  <h2>Why OpenArt Wins</h2>
+  <p class="section-sub">Four qualitative advantages that close deals. Lead with these before feature comparisons.</p>
+
+  <div class="user-quote">
+    "It's the first tool that made me feel like a creative director instead of a prompt guesser."
+    <cite>— Reddit user review</cite>
+  </div>
+
+  <div class="wins-grid">
+    <div class="win-card">
+      <div class="win-icon">❤️</div>
+      <h3>People Love It</h3>
+      <p>8M MAU, 230K paying, 7x revenue growth in 2025. This doesn't happen through marketing — it happens when a product genuinely delights people. Users recommend OpenArt unprompted.</p>
+    </div>
+    <div class="win-card">
+      <div class="win-icon">⚡</div>
+      <h3>Incredibly Easy</h3>
+      <p>Idea to output in seconds. No node-based pipelines, no prompt engineering courses. Your team opens it and starts creating. Adoption rates are the highest in the category.</p>
+    </div>
+    <div class="win-card">
+      <div class="win-icon">🎨</div>
+      <h3>Broadest Range</h3>
+      <p>100+ AI models from every major provider — photorealistic, illustrative, 3D, video, characters. Every brief gets matched to the ideal model without leaving the platform.</p>
+    </div>
+    <div class="win-card">
+      <div class="win-icon">🚀</div>
+      <h3>Fastest Team</h3>
+      <p>20-person team, $70M ARR, major release every 2-3 weeks. First to deploy World Labs Worlds. Kling 3.0 live in 2 days. Your team is never stuck on last quarter's tech.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- COMPETITORS -->
+<section class="section" id="competitors">
+  <h2>Competitor Battle Cards</h2>
+  <p class="section-sub">Click any card to see the full battle card with objection handling, talk tracks, and proof points.</p>
+
+  <div class="competitor-grid">
+    <a href="card.html?competitor=adobe-firefly" class="comp-card">
+      <div class="comp-card-header">
+        <h3>Adobe Firefly</h3>
+        <span class="comp-badge badge-amber">Bundled Only</span>
+      </div>
+      <div class="comp-achilles">Can't buy standalone — locked into Creative Cloud bundle at $60-90+/seat. Single model family with conservative, bland outputs.</div>
+      <div class="comp-edge">OpenArt: 100+ models, $59/seat standalone, ships 10x faster</div>
+      <div class="comp-link">View Battle Card <span>→</span></div>
+    </a>
+
+    <a href="card.html?competitor=higgsfield" class="comp-card">
+      <div class="comp-card-header">
+        <h3>Higgsfield</h3>
+        <span class="comp-badge badge-red">No IP Indemnification</span>
+      </div>
+      <div class="comp-achilles">Zero documented IP indemnification — dealbreaker for legal. Video-centric with limited image depth. SOC 2 "aligned" but not certified.</div>
+      <div class="comp-edge">OpenArt: $1M IP coverage, 100+ models, full creative suite</div>
+      <div class="comp-link">View Battle Card <span>→</span></div>
+    </a>
+
+    <a href="card.html?competitor=weavy-figma-weave" class="comp-card">
+      <div class="comp-card-header">
+        <h3>Weavy / Figma Weave</h3>
+        <span class="comp-badge badge-amber">Complex UI</span>
+      </div>
+      <div class="comp-achilles">Node-based complexity kills adoption. Only 4,500 credits/user. Post-Figma acquisition uncertainty on roadmap and compliance.</div>
+      <div class="comp-edge">OpenArt: Simplest interface, 3x the credits, no lock-in</div>
+      <div class="comp-link">View Battle Card <span>→</span></div>
+    </a>
+
+    <a href="card.html?competitor=runway" class="comp-card">
+      <div class="comp-card-header">
+        <h3>Runway</h3>
+        <span class="comp-badge badge-red">Video Only</span>
+      </div>
+      <div class="comp-achilles">Video-only scope, extremely expensive — $35/user for just 2,250 credits. No image, character, or story capabilities.</div>
+      <div class="comp-edge">OpenArt: Full suite, 12K+ credits, better value at $59/seat</div>
+      <div class="comp-link">View Battle Card <span>→</span></div>
+    </a>
+
+    <a href="card.html?competitor=freepik" class="comp-card">
+      <div class="comp-card-header">
+        <h3>FreePik</h3>
+        <span class="comp-badge badge-amber">AI Bolted On</span>
+      </div>
+      <div class="comp-achilles">Stock library that added AI as an afterthought — not purpose-built. Only ~5-10 AI models. High credit consumption per generation.</div>
+      <div class="comp-edge">OpenArt: Purpose-built AI, 100+ models, Consistent Characters</div>
+      <div class="comp-link">View Battle Card <span>→</span></div>
+    </a>
+
+    <a href="card.html?competitor=luma" class="comp-card">
+      <div class="comp-card-header">
+        <h3>Luma</h3>
+        <span class="comp-badge badge-red">Team Plan "Coming Soon"</span>
+      </div>
+      <div class="comp-achilles">Team plan still "coming soon." No SOC 2, no ISO 27001, no IP indemnification. Consumer-focused without governance.</div>
+      <div class="comp-edge">OpenArt: Enterprise-ready today with full governance</div>
+      <div class="comp-link">View Battle Card <span>→</span></div>
+    </a>
+
+    <a href="card.html?competitor=krea" class="comp-card">
+      <div class="comp-card-header">
+        <h3>Krea</h3>
+        <span class="comp-badge badge-red">No Compliance Certs</span>
+      </div>
+      <div class="comp-achilles">Real-time focus lacks production depth. No IP indemnification, no public compliance certs. Zero customer support documented.</div>
+      <div class="comp-edge">OpenArt: 100+ models, $1M IP protection, 12K+ credits/seat</div>
+      <div class="comp-link">View Battle Card <span>→</span></div>
+    </a>
+
+    <a href="card.html?competitor=ltx-studio" class="comp-card">
+      <div class="comp-card-header">
+        <h3>LTX Studio</h3>
+        <span class="comp-badge badge-amber">Video Only</span>
+      </div>
+      <div class="comp-achilles">Video-only scope with proprietary model only — not multi-model. Predatory billing complaints. No documented IP indemnification.</div>
+      <div class="comp-edge">OpenArt: Full suite, 100+ models, fastest integration</div>
+      <div class="comp-link">View Battle Card <span>→</span></div>
+    </a>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- OVERVIEW -->
+<section class="section" id="overview">
+  <h2>The 30-Second Pitch</h2>
+  <p class="section-sub">Memorize this. Use it on every first call.</p>
+
+  <div class="pitch-box">
+    "OpenArt is the AI creative platform that <strong>230,000 people already pay for and love</strong>. 100+ models. Images, video, characters, stories. Custom brand training. The <strong>fastest engineering team in the industry</strong> — major releases every 2-3 weeks, first to deploy World Labs. Enterprise governance: SSO, pooled credits, floating licenses, <strong>$1M IP indemnification</strong>. $59/seat. The question isn't whether your team needs AI creative tools — it's which platform they'll actually adopt and love. That's OpenArt."
+  </div>
+
+  <h2 style="margin-bottom: 2rem;">Top Objections</h2>
+
+  <details>
+    <summary>
+      <span>"You don't have SOC 2."</span>
+    </summary>
+    <div class="accordion-body">
+      <strong>Response:</strong> "We're on that roadmap and progressing. Today we have SSO, contractual no-training commitment, $1M IP indemnification, and a security posture that's passed procurement at reference customers. The real question is: do you want SOC 2 on a video-only tool or a stock library, or do you want the full AI creative platform your team will love — with compliance certifications coming soon?"<br><br>
+      <strong>Data point:</strong> Only 3 competitors have SOC 2 Type II (Adobe at corporate level, Runway, LTX Studio). The others are aligned, Type I, or nonexistent.
+    </div>
+  </details>
+
+  <details>
+    <summary>
+      <span>"Adobe/Canva already does this."</span>
+    </summary>
+    <div class="accordion-body">
+      <strong>Response:</strong> "Adobe Firefly is one model with conservative outputs, bundled inside Creative Cloud for $60-90/seat. Canva is a template tool with limited AI generation. OpenArt has 100+ models, custom brand training, consistent characters, and the fastest-shipping engineering team in the industry — at $59/seat standalone. We're not competing with Adobe's editing suite. We're replacing the part of your creative workflow that AI does better."<br><br>
+      <strong>Data point:</strong> OpenArt has 100+ models; Firefly has one family. OpenArt ships every 2-3 weeks; Adobe ships quarterly.
+    </div>
+  </details>
+
+  <details>
+    <summary>
+      <span>"Why not just use Midjourney?"</span>
+    </summary>
+    <div class="accordion-body">
+      <strong>Response:</strong> "Midjourney has no enterprise offering — no SSO, no admin controls, no team management, no IP indemnification, no floating licenses. It's a consumer tool in a Discord bot. For individual artists it's fine. For a team of 10-100 people who need governance, it's not an option."<br><br>
+      <strong>Data point:</strong> Midjourney has zero enterprise features. OpenArt has SSO, admin controls, pooled credits, floating licenses, $1M IP indemnification.
+    </div>
+  </details>
+
+  <details>
+    <summary>
+      <span>"FreePik/Higgsfield has IP indemnification too."</span>
+    </summary>
+    <div class="accordion-body">
+      <strong>For FreePik:</strong> "FreePik matches our $1M IP indemnification. The difference is what you're protecting. FreePik is a stock library with some AI; OpenArt is purpose-built for AI generation with 100+ models and custom training. Same legal protection, 10x the creative capability."<br><br>
+      <strong>For Higgsfield:</strong> "Higgsfield has zero documented IP indemnification. That's often a dealbreaker in procurement."
+    </div>
+  </details>
+
+  <details>
+    <summary>
+      <span>"Your competitor has more users / higher valuation."</span>
+    </summary>
+    <div class="accordion-body">
+      <strong>Response:</strong> "User counts and valuations don't tell you about product quality or enterprise readiness. Here's what matters: 230,000 people pay for OpenArt. Our revenue grew 7x in one year. Our 20-person team ships a major release every 2-3 weeks. We're the most capital-efficient, fastest-moving team in the category. That's the team and product you're partnering with."
+    </div>
+  </details>
+</section>
+
+<hr class="divider">
+
+<footer>
+  <div class="footer-links">
+    <a href="https://openart.ai" target="_blank">openart.ai</a>
+    <a href="#why-wins">Why We Win</a>
+    <a href="#competitors">Competitors</a>
+    <a href="#overview">Overview</a>
+  </div>
+  <p class="footer-copy">OpenArt Enterprise Battle Cards — Last updated March 2026</p>
+  <div class="footer-confidential">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    Confidential — Internal Use Only
+  </div>
+</footer>
+
+</div><!-- end app-content -->
+
+<script>
+// Password gate — SHA-256 hash check
+const PASS_HASH = '9b97ac5e767e5393cd0eed09a8e51b6f3775eba38f792593ea016e8ba9e996b0';
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function checkAuth() {
+  if (sessionStorage.getItem('bc_auth') === 'true') {
+    document.getElementById('authOverlay').classList.add('hidden');
+    document.getElementById('appContent').classList.add('visible');
+  }
+}
+
+async function tryAuth() {
+  const input = document.getElementById('authInput');
+  const hash = await sha256(input.value);
+  if (hash === PASS_HASH) {
+    sessionStorage.setItem('bc_auth', 'true');
+    document.getElementById('authOverlay').classList.add('hidden');
+    document.getElementById('appContent').classList.add('visible');
+  } else {
+    input.classList.add('error');
+    document.getElementById('authError').classList.add('visible');
+    input.value = '';
+    input.focus();
+  }
+}
+
+document.getElementById('authBtn').addEventListener('click', tryAuth);
+document.getElementById('authInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryAuth();
+  document.getElementById('authInput').classList.remove('error');
+  document.getElementById('authError').classList.remove('visible');
+});
+
+checkAuth();
+</script>
+
+</body>
+</html>

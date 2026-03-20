@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Battle Card — OpenArt</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #090a0a;
+      --surface: #141414;
+      --surface-hover: #1e1e1e;
+      --border: #2a2a2a;
+      --text: #ffffff;
+      --text-secondary: #b0b4ba;
+      --text-muted: #6b7280;
+      --green: #16d866;
+      --green-glow: rgba(22, 216, 102, 0.15);
+      --green-dark: #0fa84e;
+      --red: #ef4444;
+      --red-glow: rgba(239, 68, 68, 0.15);
+      --amber: #f59e0b;
+      --amber-glow: rgba(245, 158, 11, 0.15);
+      --radius: 12px;
+      --radius-lg: 20px;
+      --radius-pill: 46px;
+      --font-heading: 'Bricolage Grotesque', sans-serif;
+      --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* AUTH GATE */
+    .auth-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 24px;
+    }
+    .auth-overlay.hidden { display: none; }
+    .auth-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 40px;
+      max-width: 420px; width: 90%;
+      text-align: center;
+    }
+    .auth-box h2 {
+      font-family: var(--font-heading);
+      font-size: 24px; font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .auth-box p {
+      color: var(--text-secondary);
+      font-size: 14px; margin-bottom: 24px;
+    }
+    .auth-input {
+      width: 100%; padding: 12px 16px;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      font-size: 16px; font-family: var(--font-body);
+      margin-bottom: 16px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .auth-input:focus { border-color: var(--green); }
+    .auth-input.error { border-color: var(--red); }
+    .auth-error {
+      color: var(--red); font-size: 13px;
+      margin-top: -8px; margin-bottom: 16px;
+      display: none;
+    }
+    .auth-error.visible { display: block; }
+    .auth-btn {
+      width: 100%; padding: 14px;
+      background: var(--green); color: #000;
+      border: none; border-radius: var(--radius-pill);
+      font-size: 16px; font-weight: 700;
+      font-family: var(--font-body);
+      cursor: pointer; transition: background 0.2s;
+    }
+    .auth-btn:hover { background: var(--green-dark); }
+    .auth-logo {
+      font-family: var(--font-heading);
+      font-size: 20px; font-weight: 700;
+      margin-bottom: 24px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .auth-logo span { color: var(--green); }
+
+    .app-content { display: none; }
+    .app-content.visible { display: block; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(9,10,10,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 12px;
+      text-decoration: none; color: var(--text);
+    }
+    .nav-logo span {
+      font-family: var(--font-heading);
+      font-weight: 700; font-size: 18px;
+    }
+    .nav-links { display: flex; gap: 8px; }
+    .nav-links a {
+      color: var(--text-secondary); text-decoration: none;
+      padding: 8px 16px; border-radius: var(--radius-pill);
+      font-size: 14px; font-weight: 500; transition: all 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--surface); }
+    .nav-cta {
+      background: var(--green) !important; color: #000 !important;
+      font-weight: 600 !important;
+    }
+    .nav-cta:hover { background: var(--green-dark) !important; }
+
+    /* BREADCRUMB */
+    .breadcrumb {
+      padding: 80px 2rem 0;
+      max-width: 1200px; margin: 0 auto;
+      font-size: 14px; color: var(--text-muted);
+    }
+    .breadcrumb a {
+      color: var(--green); text-decoration: none;
+    }
+    .breadcrumb a:hover { text-decoration: underline; }
+
+    /* LAYOUT */
+    .card-layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 40px;
+      max-width: 1200px; margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      position: sticky; top: 96px;
+      align-self: start;
+    }
+    .sidebar-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+    .sidebar-box h3 {
+      font-family: var(--font-heading);
+      font-size: 18px; font-weight: 700;
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .sidebar-box h3 svg { color: var(--green); }
+    .sidebar-desc {
+      font-size: 14px; color: var(--text-secondary);
+      line-height: 1.7; margin-bottom: 16px;
+    }
+    .sidebar-stats {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .sidebar-stat {
+      display: flex; justify-content: space-between;
+      font-size: 13px; padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-stat:last-child { border-bottom: none; }
+    .sidebar-stat .label { color: var(--text-muted); }
+    .sidebar-stat .value { color: var(--green); font-weight: 600; }
+
+    /* MAIN CONTENT */
+    .main-content { min-width: 0; }
+
+    .card-title {
+      font-family: var(--font-heading);
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 800; line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .card-title em {
+      font-style: normal; color: var(--green);
+    }
+
+    /* SECTION BLOCKS */
+    .content-section {
+      margin-bottom: 40px;
+    }
+    .content-section h2 {
+      font-family: var(--font-heading);
+      font-size: 24px; font-weight: 700;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* AT A GLANCE TABLE */
+    .glance-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .glance-table tr {
+      border-bottom: 1px solid var(--border);
+    }
+    .glance-table td {
+      padding: 12px 0;
+      font-size: 14px;
+    }
+    .glance-table td:first-child {
+      color: var(--text-muted);
+      width: 180px;
+      font-weight: 500;
+    }
+    .glance-table td:last-child {
+      color: var(--text-secondary);
+    }
+
+    /* WHERE WE WIN */
+    .win-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 12px;
+      border-left: 3px solid var(--green);
+    }
+    .win-item h3 {
+      font-family: var(--font-heading);
+      font-size: 17px; font-weight: 700;
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .win-item h3 .check {
+      color: var(--green); font-size: 18px; flex-shrink: 0;
+    }
+    .win-item p {
+      font-size: 14px; color: var(--text-secondary); line-height: 1.7;
+    }
+    .win-item .why {
+      margin-top: 8px; font-size: 13px; color: var(--green);
+      font-weight: 500;
+    }
+
+    /* WHERE THEY DIFFERENTIATE */
+    .diff-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 12px;
+      border-left: 3px solid var(--amber);
+    }
+    .diff-item h3 {
+      font-family: var(--font-heading);
+      font-size: 15px; font-weight: 600;
+      margin-bottom: 4px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .diff-item h3 .warn { color: var(--amber); font-size: 16px; flex-shrink: 0; }
+    .diff-item p { font-size: 14px; color: var(--text-secondary); }
+
+    /* OBJECTION TABLE */
+    .objection-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .objection-table th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .objection-table th:first-child { border-radius: var(--radius) 0 0 0; }
+    .objection-table th:last-child { border-radius: 0 var(--radius) 0 0; }
+    .objection-table td {
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.7;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .objection-table td:first-child {
+      color: var(--red);
+      font-weight: 500;
+      width: 35%;
+      background: rgba(239,68,68,0.03);
+    }
+    .objection-table td:last-child {
+      color: var(--text-secondary);
+    }
+
+    /* TALK TRACK */
+    .talk-track {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+      font-size: 15px; line-height: 1.8;
+      color: var(--text-secondary);
+      border-left: 3px solid var(--green);
+      position: relative;
+    }
+    .talk-track strong { color: var(--text); }
+    .copy-btn {
+      position: absolute; top: 16px; right: 16px;
+      background: var(--surface-hover);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px; font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover {
+      color: var(--green); border-color: var(--green);
+    }
+    .copy-btn.copied {
+      color: var(--green); border-color: var(--green);
+    }
+
+    /* PROOF POINTS */
+    .proof-list {
+      list-style: none;
+    }
+    .proof-list li {
+      font-size: 14px; color: var(--text-secondary);
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .proof-list li:last-child { border-bottom: none; }
+    .proof-list .bullet {
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .proof-list .bullet-green { color: var(--green); }
+    .proof-list .bullet-amber { color: var(--amber); }
+
+    /* GLOSSARY */
+    .glossary-section {
+      margin-top: 40px;
+    }
+    .glossary-section details {
+      max-width: 100%;
+    }
+    .glossary-section summary {
+      font-size: 14px; font-weight: 600; color: var(--text-muted);
+    }
+    .glossary-item {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .glossary-item:last-child { border-bottom: none; }
+    .glossary-item strong { color: var(--text); }
+    .glossary-item span { color: var(--text-secondary); }
+
+    /* PREV/NEXT NAV */
+    .card-nav {
+      display: flex; gap: 16px;
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+    .card-nav a {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-decoration: none; color: var(--text);
+      transition: all 0.2s;
+    }
+    .card-nav a:hover {
+      border-color: var(--green);
+      transform: translateY(-2px);
+    }
+    .card-nav .nav-label {
+      font-size: 12px; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .card-nav .nav-name {
+      font-family: var(--font-heading);
+      font-size: 16px; font-weight: 700;
+    }
+    .card-nav .next { text-align: right; }
+
+    /* KILLER QUOTE */
+    .killer-quote {
+      background: var(--red-glow);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--red);
+      font-style: italic;
+    }
+    .killer-quote cite {
+      display: block; font-style: normal;
+      color: var(--text-muted); margin-top: 6px;
+      font-size: 12px;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem 2rem; text-align: center;
+    }
+    .footer-copy { font-size: 13px; color: var(--text-muted); }
+    .footer-confidential {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--red-glow); color: var(--red);
+      padding: 4px 12px; border-radius: var(--radius-pill);
+      font-size: 12px; font-weight: 600;
+      margin-top: 12px; border: 1px solid rgba(239,68,68,0.2);
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      nav { padding: 0 1rem; }
+      .nav-links { display: none; }
+      .breadcrumb { padding: 80px 1.5rem 0; }
+      .card-layout {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
+      }
+      .sidebar {
+        position: static;
+      }
+      .card-nav { flex-direction: column; }
+      .card-nav .next { text-align: left; }
+      .objection-table td:first-child { width: auto; }
+      .auth-box { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <svg width="28" height="28" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="48" stroke="#16d866" stroke-width="4"/><path d="M30 50 L45 65 L70 35" stroke="#16d866" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+      OpenArt <span>Battle Cards</span>
+    </div>
+    <h2>Internal Access</h2>
+    <p>Enter the password to access battle card materials.</p>
+    <input type="password" class="auth-input" id="authInput" placeholder="Password" autocomplete="off">
+    <div class="auth-error" id="authError">Incorrect password. Please try again.</div>
+    <button class="auth-btn" id="authBtn">Access Battle Cards</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="app-content" id="appContent">
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <svg width="28" height="28" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="48" stroke="#16d866" stroke-width="4"/><path d="M30 50 L45 65 L70 35" stroke="#16d866" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+    <span>OpenArt <span style="color: var(--green);">Battle Cards</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">All Cards</a>
+    <a href="index.html#overview">Overview</a>
+    <a href="https://openart.ai" target="_blank" class="nav-cta">openart.ai</a>
+  </div>
+</nav>
+
+<div class="breadcrumb" id="breadcrumb"></div>
+
+<div class="card-layout">
+  <aside class="sidebar">
+    <div class="sidebar-box">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        About OpenArt
+      </h3>
+      <div class="sidebar-desc">
+        AI creative platform with 100+ models, 8M monthly users, 230K paying subscribers. Images, video, consistent characters, custom model training, and one-click stories — all in one platform with enterprise governance.
+      </div>
+      <div class="sidebar-stats">
+        <div class="sidebar-stat"><span class="label">MAU</span><span class="value">8,000,000</span></div>
+        <div class="sidebar-stat"><span class="label">Paying</span><span class="value">230,000+</span></div>
+        <div class="sidebar-stat"><span class="label">ARR</span><span class="value">$70M</span></div>
+        <div class="sidebar-stat"><span class="label">Models</span><span class="value">100+</span></div>
+        <div class="sidebar-stat"><span class="label">Team Size</span><span class="value">~20</span></div>
+        <div class="sidebar-stat"><span class="label">IP Indemnification</span><span class="value">$1M</span></div>
+        <div class="sidebar-stat"><span class="label">Price</span><span class="value">$59/seat</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content" id="mainContent">
+    <!-- Rendered by JS -->
+  </main>
+</div>
+
+<footer>
+  <p class="footer-copy">OpenArt Enterprise Battle Cards — Last updated March 2026</p>
+  <div class="footer-confidential">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    Confidential — Internal Use Only
+  </div>
+</footer>
+
+</div><!-- end app-content -->
+
+<script>
+// Password gate
+const PASS_HASH = '9b97ac5e767e5393cd0eed09a8e51b6f3775eba38f792593ea016e8ba9e996b0';
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function checkAuth() {
+  if (sessionStorage.getItem('bc_auth') === 'true') {
+    document.getElementById('authOverlay').classList.add('hidden');
+    document.getElementById('appContent').classList.add('visible');
+  }
+}
+
+async function tryAuth() {
+  const input = document.getElementById('authInput');
+  const hash = await sha256(input.value);
+  if (hash === PASS_HASH) {
+    sessionStorage.setItem('bc_auth', 'true');
+    document.getElementById('authOverlay').classList.add('hidden');
+    document.getElementById('appContent').classList.add('visible');
+  } else {
+    input.classList.add('error');
+    document.getElementById('authError').classList.add('visible');
+    input.value = '';
+    input.focus();
+  }
+}
+
+document.getElementById('authBtn').addEventListener('click', tryAuth);
+document.getElementById('authInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryAuth();
+  document.getElementById('authInput').classList.remove('error');
+  document.getElementById('authError').classList.remove('visible');
+});
+
+// Competitor order for prev/next nav
+const COMP_ORDER = ['adobe-firefly','higgsfield','weavy-figma-weave','runway','freepik','luma','krea','ltx-studio'];
+
+// All battle card data
+const CARDS = {
+  'adobe-firefly': {
+    name: 'Adobe Firefly',
+    glance: [
+      ['Company', 'Adobe (San Jose, CA) — $200B+ market cap, ~30,000 employees'],
+      ['Focus', 'AI generation within the Creative Cloud ecosystem'],
+      ['Enterprise Pricing', 'Bundled with Creative Cloud (~$60-90/seat/month); not standalone'],
+      ['Model Approach', 'Single model family (Firefly), recently adding select partners'],
+      ['Compliance', 'SOC 2 Type II, ISO 27001, FedRAMP (Adobe corporate level)'],
+      ['IP Indemnification', 'Up to $10K/asset (teams VIP), up to $3M/asset (ETLA)'],
+      ['Key Strength', 'Established enterprise sales and compliance infrastructure'],
+    ],
+    wins: [
+      { title: 'Creative Range: 100+ Models vs One Model Family', desc: 'Adobe Firefly is a single model family. OpenArt gives your team 100+ models spanning every aesthetic — photorealistic, illustrative, 3D, abstract, anime, and more. Firefly is known for producing "safe," conservative outputs.', why: 'Creative teams need diversity. A single-model platform forces compromises on style, quality, and creative ambition.' },
+      { title: 'Standalone Simplicity vs Ecosystem Lock-In', desc: "You can't buy Firefly standalone for enterprise — it's bundled with Creative Cloud. That means paying for Photoshop, Illustrator, and 20+ other apps just to get AI generation. OpenArt is $59/seat/month.", why: "Procurement teams don't want to buy a suite to get one capability. OpenArt is a clean line item." },
+      { title: 'Speed of Innovation', desc: 'OpenArt ships every 2-3 weeks. Adobe updates Firefly quarterly. Kling 3.0 live in 2 days. World Labs first to deploy. Adobe is constrained by enterprise release cycles.', why: "In AI, last quarter's model is yesterday's news. Your team deserves today's best." },
+      { title: 'Users Love It', desc: 'OpenArt has 8M monthly users and 230K paying subscribers who chose it over alternatives — including Adobe. Revenue grew 7x in 2025. Firefly adoption is driven by Creative Cloud bundling, not enthusiasm.', why: 'Adoption drives ROI. A tool people love gets used.' },
+    ],
+    diffs: [
+      { title: 'Compliance maturity', desc: 'SOC 2 Type II, ISO 27001, FedRAMP at Adobe corporate level — the gold standard for enterprise procurement' },
+      { title: 'IP indemnification', desc: 'Up to $3M/asset on ETLA — the highest in the industry' },
+      { title: 'Content Credentials', desc: 'C2PA-based provenance metadata embedded in every Firefly output — unique in market' },
+      { title: 'Adobe ecosystem', desc: 'Deep ties to Photoshop, Illustrator, Premiere, and Adobe Stock' },
+    ],
+    objections: [
+      ['"We already have Creative Cloud."', 'Many of our enterprise customers use OpenArt alongside Adobe. Firefly is good for small touch-ups inside Photoshop. For AI-native creative production at scale — campaign concepts, brand characters, product visuals, video — OpenArt\'s 100+ models produce more diverse, on-brand output. It\'s not either/or.'],
+      ['"Adobe has SOC 2 and ISO 27001."', "They do, and we're on that roadmap. But today we offer SSO, contractual no-training commitment, and $1M IP indemnification — and we've passed procurement at reference customers. Meanwhile, your team gets 100+ models and ships 10x faster than Adobe's quarterly releases."],
+      ['"Adobe\'s IP indemnification is $3M per asset."', "True on ETLA contracts, which are also the most expensive tier. Our $1M aggregate cap covers the vast majority of enterprise use cases. And the IP risk is theoretical — there hasn't been a successful claim against AI-generated content yet. What's not theoretical is the creative advantage of 100+ models vs one."],
+      ['"Firefly has Content Credentials."', "Content Credentials are valuable for media provenance. If that's a strict requirement, Adobe is the only player. But for most enterprise creative work — campaigns, product visuals, social content — what matters more is creative quality, speed, and model variety."],
+    ],
+    talkTrack: "Adobe Firefly is a perfectly fine AI feature inside Photoshop. But it's one model, one aesthetic, and one quarterly release cycle. If your team needs diverse creative output — and they do — they'll hit Firefly's limits fast. OpenArt gives them 100+ models, custom brand training, and an engineering team that ships new capabilities every 2-3 weeks. We were the first platform to deploy World Labs. We had Kling 3.0 live in 2 days. And we do it at $59/seat — not a Creative Cloud bundle. Many of our enterprise customers use both: Adobe for editing, OpenArt for AI generation.",
+    proofPoints: [
+      [true, '100+ models vs Firefly\'s single model family'],
+      [true, '$59/seat standalone vs CC bundle at $60-90+/seat'],
+      [true, 'Major release every 2-3 weeks vs Adobe\'s quarterly cycle'],
+      [true, '8M MAU, 230K paying — organic, product-led growth'],
+      [true, 'First to deploy World Labs Worlds, Kling 3.0 in 2 days'],
+      [false, 'Adobe: Best-in-class compliance (SOC 2 II, ISO, FedRAMP)'],
+      [false, 'Adobe: $3M/asset IP indemnification on ETLA — industry highest'],
+    ],
+    glossary: [
+      ['ETLA', "Enterprise Term License Agreement — Adobe's highest-tier enterprise contract"],
+      ['Content Credentials', 'Tamper-evident metadata embedded in files showing how they were created (C2PA standard)'],
+      ['Creative Cloud', "Adobe's suite of 20+ creative apps (Photoshop, Illustrator, Premiere, etc.)"],
+    ],
+    killerQuote: { text: '"Firefly ignores most of their prompts and gives simple low quality images that don\'t make sense... it has been beyond disappointing."', source: 'Adobe Community Forums, 2024-2025' },
+  },
+
+  'higgsfield': {
+    name: 'Higgsfield',
+    glance: [
+      ['Company', 'Higgsfield (founded 2023 by ex-Snap exec) — $1.3B valuation, $200M ARR'],
+      ['Focus', 'AI video platform with ~50 models and 250+ VFX presets'],
+      ['Enterprise Pricing', 'Custom (consumer plans $9-149/month; Creator: 6,000 credits/month)'],
+      ['Model Approach', 'Multi-model (~50+) including Sora 2, Veo 3.1, Kling 2.6, Seedream'],
+      ['Compliance', 'SOC 2 "aligned" (not certified), ISO 42001, GDPR, Zero Retention Mode'],
+      ['IP Indemnification', 'None documented — major gap'],
+      ['Key Strength', 'Strong video capabilities, $1.3B valuation, 15M+ users'],
+    ],
+    wins: [
+      { title: 'No IP Indemnification — Their Biggest Blocker', desc: 'Higgsfield has no documented IP indemnification. OpenArt provides $1M coverage. When legal reviews the vendor, this is often a dealbreaker.', why: 'Legal teams block AI tool procurement over IP risk. OpenArt removes that blocker; Higgsfield doesn\'t.' },
+      { title: '100+ Models vs ~50 (Full Creative Suite)', desc: 'Higgsfield has ~50 models, primarily video-focused. OpenArt has 100+ spanning images, video, characters, and stories. Higgsfield lacks One-Click Stories and has less depth in image generation.', why: 'Twice the models, plus full-suite capabilities beyond video.' },
+      { title: 'Easier to Use', desc: "OpenArt's interface is clean and intuitive — idea to output in seconds. Higgsfield has VFX presets, storyboard tools, camera controls that add complexity.", why: 'Adoption is everything. The simpler tool wins in enterprise rollouts.' },
+      { title: 'Better Credit Value', desc: "OpenArt Enterprise: 12,000+ credits/seat/month with no expiry. Higgsfield Creator maxes at 6,000 credits/month, and Sora 2/Veo 3.1 consume 40-70+ credits each.", why: "More credits, pooled, never expire. Your team won't hit a wall mid-campaign." },
+    ],
+    diffs: [
+      { title: 'Strong momentum', desc: '$1.3B valuation, $200M ARR, 15M+ users, growing fast' },
+      { title: 'Video-specific features', desc: '250+ VFX presets, camera control, storyboard tools' },
+      { title: 'Zero Retention Mode', desc: 'Optional feature where no data is stored on servers (unique in market)' },
+      { title: 'EU Data Residency + SSO + Audit Logs', desc: 'Option for European data hosting; SSO and audit logs available today' },
+    ],
+    objections: [
+      ['"Higgsfield is valued at $1.3B."', "Valuation doesn't equal product quality. OpenArt has $70M ARR, 8M monthly users, and 7x revenue growth — built by 20 people. That's $3.5M per employee. Big valuation doesn't mean better product for your team."],
+      ['"Higgsfield has SSO and audit logs today."', "They do, and we have SSO too. Audit logs are on our roadmap. But here's what Higgsfield doesn't have: IP indemnification. When legal reviews both vendors, that's the line item that matters most — and OpenArt has $1M coverage."],
+      ['"Higgsfield has Zero Retention Mode."', "That's a nice feature for highly sensitive work. We contractually commit to never training on your data, which addresses the core concern. For everything else — model breadth, ease of use, credit value, IP protection — OpenArt wins."],
+      ['"Higgsfield has more VFX features."', "If you need 250 VFX presets, Higgsfield is more specialized for video. But most enterprise teams need more than video effects — they need images, characters, brand-trained models, and stories. OpenArt handles the full creative workflow."],
+    ],
+    talkTrack: "Higgsfield is a strong video platform — big valuation, fast growth. But here's what they're missing: IP indemnification. Zero coverage. When your legal team reviews the vendor, that's a dealbreaker for most enterprises. OpenArt provides $1M in IP protection. We also give your team 100+ models versus their ~50, a full creative suite beyond just video, 12,000+ pooled credits per seat that never expire, and the easiest interface in the category. And we ship faster — a major release every 2-3 weeks, first to deploy World Labs, Kling 3.0 in 2 days.",
+    proofPoints: [
+      [true, '$1M IP indemnification vs Higgsfield\'s zero'],
+      [true, '100+ models vs Higgsfield\'s ~50'],
+      [true, '12,000+ credits/seat vs Creator plan\'s 6,000'],
+      [true, 'Full creative suite vs primarily video'],
+      [true, 'Simpler interface, designed for adoption'],
+      [false, 'Higgsfield: SSO + audit logs today; SOC 2 "aligned"'],
+      [false, 'Higgsfield: Zero Retention Mode (unique feature)'],
+      [false, 'Higgsfield: $1.3B valuation, $200M ARR, 15M+ users'],
+    ],
+    glossary: [
+      ['SOC 2 "aligned"', 'The company follows SOC 2 practices but hasn\'t completed the formal Type I or Type II audit'],
+      ['ISO 42001', 'Standard for AI management systems — NOT the same as ISO 27001 (information security)'],
+      ['Zero Retention Mode', "Option to have no user content or data stored on the provider's servers after processing"],
+    ],
+    killerQuote: { text: '"In late December 2025, hundreds of users got banned from Higgsfield, their accounts froze, and their credits disappeared."', source: 'GitHub investigation, December 2025' },
+  },
+
+  'weavy-figma-weave': {
+    name: 'Weavy / Figma Weave',
+    glance: [
+      ['Company', 'Weavy.ai — acquired by Figma (now Figma Weave), part of ~$12B Figma'],
+      ['Focus', 'Node-based AI creative workflows with access to multiple models'],
+      ['Enterprise Pricing', 'Custom (~$48/user/month estimated)'],
+      ['Model Approach', 'Curated selection (~10-20 models: Flux, Runway, Veo, Ideogram)'],
+      ['Compliance', 'Not publicly documented (post-acquisition status unclear)'],
+      ['IP Indemnification', 'Available on enterprise terms (details not public)'],
+      ['Key Strength', 'Visual node-based workflow builder, Figma ecosystem integration'],
+    ],
+    wins: [
+      { title: 'Simple Interface vs Node-Based Complexity', desc: "Weavy's core differentiator — node-based visual workflows — is also its biggest adoption risk. Building AI pipelines requires connecting nodes, configuring parameters, and understanding workflow logic. OpenArt: open it, type a prompt, get output.", why: 'The #1 reason enterprise software fails is low adoption. Node-based workflows appeal to 10% of your team. Simple interfaces appeal to 100%.' },
+      { title: '100+ Models vs ~10-20', desc: 'Weavy curates a smaller selection of models. OpenArt integrates 100+ from every major provider. 5-10x the model variety.', why: 'Curated means someone else decided what your team can use. 100+ means your team decides.' },
+      { title: 'Nearly 3x the Credits', desc: 'OpenArt Enterprise: 12,000+ credits/seat/month. Weavy: ~4,500 credits/user/month.', why: "When your team has a deadline and they're out of credits, you have a problem. 3x headroom prevents that." },
+      { title: 'No Ecosystem Lock-In', desc: "Weavy is now part of Figma. If your design tool strategy shifts, your AI tool is caught in the change. OpenArt is standalone.", why: 'Platform independence protects your team from vendor ecosystem shifts.' },
+    ],
+    diffs: [
+      { title: 'Node-based workflows', desc: 'Genuinely powerful for technical users building complex generation pipelines' },
+      { title: 'Figma integration', desc: 'Post-acquisition, expect deep ties to Figma design ecosystem' },
+      { title: 'IP indemnification', desc: 'Available on enterprise terms' },
+      { title: '3-month credit rollover', desc: 'Credits don\'t expire for 3 months' },
+    ],
+    objections: [
+      ['"Weavy has node-based workflows."', "Node-based workflows are powerful for technical users building complex pipelines. But most creative teams want speed, not pipeline construction. Will your designers actually build node workflows, or will they just want to generate content?"],
+      ['"Weavy is now part of Figma."', "That's a double-edged sword. Yes, Figma ecosystem integration. But also Figma's enterprise release cycle, roadmap priorities, and ecosystem lock-in. OpenArt is standalone — we ship on our own schedule, every 2-3 weeks."],
+      ['"Weavy has IP indemnification."', "Good — so do we, at $1M. The question is: do you want IP protection with a node-based tool your team may struggle to adopt, or IP protection with the easiest, most-loved AI platform in the market?"],
+      ['"We\'re a Figma shop."', "Many of our customers are too. OpenArt complements Figma — your team designs in Figma and generates AI content in OpenArt. They're different workflows."],
+    ],
+    talkTrack: "Weavy's node-based workflows are impressive technology. But there's a reason most teams don't build AI pipelines — they just want to create. OpenArt gives your team 100+ models, the simplest interface in the category, and 12,000+ pooled credits per seat — nearly 3x what Weavy offers. We ship every 2-3 weeks. We were first to deploy World Labs. And your team won't need training to use it. The question isn't 'which tool is more powerful for a technical user building pipelines?' It's 'which tool will your entire team actually adopt and love?' That's OpenArt.",
+    proofPoints: [
+      [true, 'Seconds to first output vs Weavy\'s pipeline construction'],
+      [true, '100+ models vs Weavy\'s ~10-20 curated'],
+      [true, '12,000+ credits/seat vs Weavy\'s ~4,500'],
+      [true, 'Standalone — no ecosystem lock-in'],
+      [true, 'Ships every 2-3 weeks (startup speed)'],
+      [false, 'Weavy: Node-based workflows (niche but powerful)'],
+      [false, 'Weavy: Figma ecosystem integration'],
+      [false, 'Weavy: Post-acquisition roadmap uncertainty'],
+    ],
+    glossary: [
+      ['Node-based workflow', "Visual programming interface where users connect 'nodes' to build AI generation pipelines — similar to Unreal Blueprints or ComfyUI"],
+      ['Figma Weave', "Weavy's expected rebranding following Figma's acquisition"],
+      ['Curated model selection', "The platform chooses which models to offer (vs OpenArt's approach of integrating everything)"],
+    ],
+    killerQuote: { text: '"Weavy is the most pro-oriented, catering more towards power users than to beginners who want their hands held."', source: 'Chase Jarvis review, 2026' },
+  },
+
+  'runway': {
+    name: 'Runway',
+    glance: [
+      ['Company', 'Runway (New York, NY) — ~$4B valuation, ~100+ employees'],
+      ['Focus', 'AI video generation (Gen-3, Gen-4, Gen-4.5)'],
+      ['Enterprise Pricing', 'Custom (standard plans $12-95/user/month)'],
+      ['Model Approach', 'Proprietary model family (Gen-3/Gen-4) — video-focused'],
+      ['Compliance', 'SOC 2 Type II certified'],
+      ['IP Indemnification', 'Not publicly documented; custom enterprise terms'],
+      ['Key Strength', 'Industry-leading AI video quality, strong brand in film/media'],
+    ],
+    wins: [
+      { title: 'Full Creative Suite vs Video Only', desc: 'Runway is a video tool. OpenArt is a complete creative platform — images, video, characters, personalized models, one-click stories. One platform, one credit pool.', why: 'Creative teams don\'t work in one format. Campaigns need images AND video AND characters.' },
+      { title: '100+ Models vs One Model Family', desc: 'Runway offers proprietary Gen-3/Gen-4. OpenArt integrates 100+ models including Kling, Wan, Veo, FLUX, Seedream — plus Runway-class video capabilities.', why: 'Different briefs need different aesthetics. A single-model platform forces compromises.' },
+      { title: 'Better Value', desc: "Runway Pro: $35/user for 2,250 credits (video-only). OpenArt Enterprise: 12,000+ credits/seat across all formats at $59/seat.", why: 'When procurement compares cost-per-asset, OpenArt wins decisively.' },
+      { title: 'Speed of Innovation', desc: "OpenArt ships every 2-3 weeks. Runway every few months. As a multi-model platform, OpenArt integrates any breakthrough — including Runway's competitors.", why: 'Multi-model platforms are future-proof. Single-model platforms bet on one horse.' },
+    ],
+    diffs: [
+      { title: 'SOC 2 Type II certified', desc: 'Mature compliance posture, ahead of OpenArt' },
+      { title: 'Video quality leadership', desc: 'Gen-4/Gen-4.5 is among the best for pure video generation' },
+      { title: 'Brand in film/media', desc: 'Well-known in Hollywood, advertising, and production' },
+      { title: 'API access', desc: 'Programmatic video generation for automation workflows' },
+    ],
+    objections: [
+      ['"Runway has the best AI video."', "Runway's Gen-4 is strong for video. But most creative teams need more than video — images, characters, stories, brand consistency. OpenArt handles all of that with one credit pool. And our video capabilities (Kling, Veo, Wan) are competitive at a fraction of the cost."],
+      ['"Runway has SOC 2 Type II."', "They do. We're on that path. Today we offer SSO, contractual no-training commitment, and $1M IP indemnification. Do you want SOC 2 with a video-only tool, or a full creative platform your team will adopt and love?"],
+      ['"We need API access."', "API is on our near-term roadmap. If API is a day-one hard requirement for video automation specifically, Runway works. But for 80% of your team's creative work that isn't programmatic video, OpenArt is the better platform."],
+      ['"Runway is more established."', "Strong brand recognition. But 8M monthly users, 230K paying, 7x revenue growth in 2025 — with 20 people. Established doesn't mean better; it often means slower."],
+    ],
+    talkTrack: "If your team only needs AI video and nothing else, Runway is a solid choice. But that's rarely the case. Most creative teams need images, video, characters, and stories — and they don't want to manage multiple vendors. OpenArt gives your team 100+ models across every format, 12,000+ pooled credits per seat, and an engineering team that ships faster than anyone. We had Kling 3.0 live in 2 days. We were first to deploy World Labs. And we do it all in one platform for $59/seat — while Runway charges $35/user for video credits alone.",
+    proofPoints: [
+      [true, 'Full creative suite vs Runway\'s video-only scope'],
+      [true, '100+ models vs Runway\'s single model family'],
+      [true, '12,000+ credits/seat vs Runway Pro\'s 2,250 credits/user'],
+      [true, '$59/seat (full suite) vs Runway Pro $35/user (video only)'],
+      [true, 'Major release every 2-3 weeks vs Runway every few months'],
+      [false, 'Runway: SOC 2 Type II certified — OpenArt on roadmap'],
+      [false, 'Runway: API access available today'],
+      [false, 'Runway: Workspace limit of 10 editors on Pro (100 on Enterprise)'],
+    ],
+    glossary: [
+      ['Gen-4/Gen-4.5', "Runway's proprietary video generation models"],
+      ['Explore Mode', "Runway's unlimited generation feature on the $76+/month plan"],
+      ['Multi-model platform', 'Integrates models from many providers vs building one proprietary model'],
+    ],
+    killerQuote: { text: '"A single 20-second clip just cost 440 credits. If you\'re on the $15/month Standard plan, you\'ve just used up most of your 625 credits on one short video."', source: 'Segmind Blog, 2025' },
+  },
+
+  'freepik': {
+    name: 'FreePik',
+    glance: [
+      ['Company', 'Freepik Company (Malaga, Spain) — 1,000+ employees, 100M+ monthly users'],
+      ['Focus', 'Stock content library (vectors, photos, PSD) that added AI generation'],
+      ['Enterprise Pricing', 'Custom, credit-based, unlimited users'],
+      ['Model Approach', 'Limited AI models (~5-10: Flux, Imagen, Seedream)'],
+      ['Compliance', 'SOC 2 Type I, ISO 27001 certified, GDPR compliant'],
+      ['IP Indemnification', '$1M default — matches OpenArt'],
+      ['Key Strength', 'Enormous stock content library + established enterprise presence'],
+    ],
+    wins: [
+      { title: 'Purpose-Built for AI vs Stock Library with AI Bolted On', desc: "FreePik is a stock content platform that added AI as a feature. OpenArt was purpose-built for AI creative production from day one. 100+ models, consistent characters, personalized brand models, one-click stories, 100 parallel generations.", why: "If your team's primary need is AI generation (not downloading stock vectors), they need a platform designed for that workflow." },
+      { title: '100+ Models vs ~5-10', desc: "FreePik offers a handful of AI models. OpenArt integrates 100+ spanning every style, format, and use case.", why: 'Model variety = creative range. Every brief deserves the right model.' },
+      { title: 'Users Love OpenArt', desc: '8M MAU, 230K paying, 7x revenue growth — driven by organic adoption. FreePik\'s user base comes from 15+ years of stock distribution.', why: 'The team adopting the tool needs to love using it.' },
+      { title: 'Consistent Characters & One-Click Stories', desc: "OpenArt's Consistent Characters maintain brand personas across any scene. One-Click Stories create multi-scene visual narratives. FreePik has neither.", why: 'Brand consistency across campaigns is a hard problem. OpenArt solves it natively.' },
+    ],
+    diffs: [
+      { title: 'IP indemnification matches ours', desc: '$1M default — the only other competitor to offer this by default' },
+      { title: 'Compliance ahead', desc: 'SOC 2 Type I + ISO 27001 (OpenArt on roadmap for both)' },
+      { title: 'Unlimited users', desc: 'Credit-based model, not per-seat' },
+      { title: 'Massive stock library', desc: 'If the team needs stock vectors/photos alongside AI, FreePik bundles both' },
+    ],
+    objections: [
+      ['"FreePik has IP indemnification too."', "They do — and we match it at $1M. The difference is what you're indemnifying. FreePik is primarily a stock library that added some AI. OpenArt is purpose-built for AI generation with 100+ models, custom brand training, and consistent characters. Same protection, 10x the creative capability."],
+      ['"FreePik has SOC 2 and ISO 27001."', "They're ahead on certifications — we're on that roadmap. But our product advantage is significant: 100+ models, consistent characters, custom training, and an engineering team that ships every 2-3 weeks."],
+      ['"FreePik has unlimited users."', "Unlimited users sounds good until you look at the credit model. FreePik's credits are consumed fast — a single HD video can cost 2,600+ credits. OpenArt's 12,000+ credits per seat, pooled with no expiry, often works out to more capacity."],
+      ['"We already use FreePik for stock."', "Keep using it for stock! Many teams use FreePik for vectors and photos alongside OpenArt for AI generation. They're complementary. But if your primary need is AI creative production, OpenArt is the deeper platform."],
+    ],
+    talkTrack: "FreePik is a great stock content library. But there's a big difference between a stock platform that added AI tools and a platform purpose-built for AI creative production. OpenArt gives your team 100+ models, consistent brand characters, custom model training, and one-click stories — capabilities FreePik simply doesn't have. We both offer $1M IP indemnification. We both have SSO and admin controls. The question is: does your team need stock downloads with some AI, or does it need a full AI creative platform? If it's the latter, that's OpenArt.",
+    proofPoints: [
+      [true, '100+ models vs FreePik\'s ~5-10 AI models'],
+      [true, 'Purpose-built for AI generation vs stock library with AI add-on'],
+      [true, 'Consistent Characters + One-Click Stories (FreePik has neither)'],
+      [true, 'Major release every 2-3 weeks; first to deploy World Labs'],
+      [false, 'Both: $1M IP indemnification'],
+      [false, 'FreePik: SOC 2 Type I + ISO 27001'],
+      [false, 'FreePik: Unlimited users (credit-based)'],
+      [false, 'FreePik: High credit consumption (2,600+ credits for one HD video)'],
+    ],
+    glossary: [
+      ['Stock content', 'Pre-made assets (photos, vectors, templates) available for download and licensing'],
+      ['Consistent Characters', 'AI-generated characters that maintain visual consistency across different scenes and contexts'],
+      ['Credit-based vs per-seat', 'FreePik charges by credits consumed (unlimited users); OpenArt charges per seat with pooled credits'],
+    ],
+    killerQuote: { text: '"Since they opened up AI-generated uploads, you have to scroll through pages of obvious AI garbage to find the hand-crafted SVGs that made it worth using."', source: 'r/graphic_design, 2024-2025' },
+  },
+
+  'luma': {
+    name: 'Luma',
+    glance: [
+      ['Company', 'Luma Labs (San Francisco, CA) — venture-backed startup'],
+      ['Focus', 'AI video and image generation (Dream Machine / Ray3.14)'],
+      ['Enterprise Pricing', 'Custom (consumer plans: $25-300/month)'],
+      ['Model Approach', 'Multi-model: Ray3.14, Sora 2, Seedream, GPT Image, ElevenLabs'],
+      ['Compliance', 'No SOC 2 or ISO 27001 (relies on AWS certs), GDPR aligned'],
+      ['IP Indemnification', 'None documented'],
+      ['Key Strength', 'Strong video quality, Dream Machine API, multi-model approach'],
+    ],
+    wins: [
+      { title: 'Enterprise-Ready Today vs "Coming Soon"', desc: 'Luma\'s Team plan is still listed as "coming soon." No team management, shared workspaces, or enterprise admin. OpenArt has SSO, admin controls, floating licenses, pooled credits, and $1M IP indemnification today.', why: "Your team can't wait for a roadmap. They need governance now." },
+      { title: '100+ Models vs ~5-10', desc: 'Luma integrates a handful of models (Ray3.14, Sora 2, Seedream, GPT Image). OpenArt has 100+. The breadth difference is enormous.', why: 'More models = more creative range.' },
+      { title: 'Full Creative Suite vs Primarily Video', desc: 'Luma is centered on video/image. OpenArt covers images, video, consistent characters, personalized models, and one-click stories.', why: 'Creative teams work across formats. One platform, one credit pool.' },
+      { title: '$1M IP Indemnification vs Zero', desc: 'Luma has no documented IP indemnification. OpenArt provides $1M coverage.', why: "Legal teams won't approve a tool with zero IP protection for commercial content." },
+    ],
+    diffs: [
+      { title: 'Dream Machine video quality', desc: 'Ray3.14 produces competitive video output' },
+      { title: 'API access', desc: 'Dream Machine API available, also on Amazon Bedrock' },
+      { title: 'Simple UX for video', desc: 'Intuitive video generation interface' },
+      { title: 'Audio integration', desc: 'ElevenLabs text-to-speech and music generation built in' },
+    ],
+    objections: [
+      ['"Luma\'s Dream Machine is easy to use."', "It is — for individual video creation. But there's no team management, no admin controls, no SSO, no pooled credits. 'Easy for one person' and 'ready for a team of 25' are very different. OpenArt is easy to use AND enterprise-ready."],
+      ['"Luma has API access."', "They do, and API is on our roadmap. If programmatic video generation is a day-one requirement, Luma's API is solid. But for the broader team workflow — images, video, characters, stories — OpenArt is more complete."],
+      ['"Luma is on Amazon Bedrock."', "Cloud marketplace is convenient for procurement, but doesn't solve the enterprise features gap. No SSO, no team management, no IP indemnification through Bedrock. Those come from the vendor."],
+    ],
+    talkTrack: "Luma makes good video — Dream Machine is a solid product for individual creators. But their Team plan is literally listed as 'coming soon.' There's no SSO, no admin controls, no IP indemnification, no compliance certifications. If you need to roll out AI creative tools to a team of 10 or 25 or 100 people, you need governance — and Luma doesn't have it. OpenArt does: SSO, floating licenses, pooled credits, $1M IP indemnification, admin controls, and 100+ models across images, video, characters, and stories. Plus our engineering team ships a major release every 2-3 weeks.",
+    proofPoints: [
+      [true, 'Enterprise-ready today vs Luma\'s Team plan "coming soon"'],
+      [true, '100+ models vs Luma\'s ~5-10'],
+      [true, '$1M IP indemnification vs Luma\'s zero'],
+      [true, 'SSO, admin controls, pooled credits — all available'],
+      [true, 'Full creative suite (images, video, characters, stories)'],
+      [false, 'Luma: No SOC 2, no ISO 27001 (relies on AWS)'],
+      [false, 'Luma: API access available (OpenArt on roadmap)'],
+      [false, 'Luma: Available on Amazon Bedrock'],
+    ],
+    glossary: [
+      ['Ray3.14', "Luma's proprietary video generation model (latest version of Dream Machine)"],
+      ['Amazon Bedrock', "AWS's managed service for accessing AI models via API"],
+      ['"Coming soon"', 'Feature announced but not yet available — no confirmed date'],
+    ],
+    killerQuote: { text: '"Out of 14 attempts, only three videos turned out impressive, while the rest were glitchy or downright unattractive."', source: 'bymilliepham.com, 2025' },
+  },
+
+  'krea': {
+    name: 'Krea',
+    glance: [
+      ['Company', 'Krea AI — 30M+ users across 191 countries'],
+      ['Focus', 'Real-time AI generation and creative tools'],
+      ['Enterprise Pricing', 'Custom (Business plan: $200/month base for up to 50 seats, 80K compute units)'],
+      ['Model Approach', 'Focused set of models optimized for real-time generation'],
+      ['Compliance', 'No SOC 2 or ISO 27001 publicly confirmed'],
+      ['IP Indemnification', 'None documented'],
+      ['Key Customers', 'LEGO, Samsung, Nike, Microsoft, Shopify, Pixar'],
+    ],
+    wins: [
+      { title: 'Depth Beyond Real-Time', desc: "Krea's core strength is real-time generation — instant visual feedback. Impressive for exploration, but enterprise creative production needs batch generation, high-resolution output, video, characters, stories, and custom brand models.", why: 'Real-time is great for ideation. Campaigns and brand content need production-quality outputs at scale.' },
+      { title: '100+ Models vs a Focused Set', desc: "Krea focuses on real-time-optimized models. OpenArt integrates 100+ covering every aesthetic and format.", why: 'Enterprise creative teams work across many styles and formats. 100+ models means the platform never constrains the brief.' },
+      { title: '$1M IP Indemnification vs None', desc: 'Krea has no documented IP indemnification. OpenArt provides $1M coverage.', why: 'This is often the line item that determines whether legal approves the vendor.' },
+      { title: 'No Compliance Certifications', desc: "No publicly confirmed SOC 2 or ISO 27001. Enterprise plan includes audit logs and custom ToS, but no formal compliance posture.", why: 'Enterprise procurement needs more than audit logs.' },
+    ],
+    diffs: [
+      { title: 'Impressive customer logos', desc: 'LEGO, Samsung, Nike, Microsoft, Shopify, Pixar' },
+      { title: 'Real-time generation', desc: 'Genuinely unique capability for instant visual exploration' },
+      { title: 'Team-based pricing', desc: 'Business plan includes up to 50 seats at $200/month base' },
+      { title: 'Analytics API', desc: 'Programmatic access to usage data' },
+    ],
+    objections: [
+      ['"Krea has LEGO, Nike, Microsoft."', "Impressive logos. The question is what they're using Krea for and at what scale. Our 230,000 paying subscribers — not free users, paying subscribers — use OpenArt for production work every day."],
+      ['"Krea\'s real-time generation is unique."', "It is — great for exploration. But enterprise production needs batch generation, video, characters, stories, custom brand models, and 100+ models. OpenArt covers the full workflow, not just exploration."],
+      ['"Krea\'s Business plan is only $200/month for 50 seats."', "Attractive price point. But 80,000 compute units across 50 seats = 1,600 units per person. OpenArt Enterprise at $59/seat gives 12,000+ credits per person. Dramatically higher per-person capacity."],
+      ['"Krea has an Analytics API."', "Useful for data-driven teams. Our admin dashboard provides usage analytics. But analytics on what? Analytics on 100+ models across images, video, and characters is more valuable than analytics on a narrower toolset."],
+    ],
+    talkTrack: "Krea has great customer logos and real-time generation is genuinely cool. But look deeper: no IP indemnification, no public compliance certifications, and a focused model set optimized for real-time — not the 100+ models, consistent characters, and production-grade capabilities enterprise teams need. OpenArt gives your team the full creative platform with $1M IP protection, 12,000+ credits per seat, and an engineering team that ships new capabilities every 2-3 weeks. We're not just broader — we're deeper.",
+    proofPoints: [
+      [true, '100+ models vs Krea\'s focused set'],
+      [true, '$1M IP indemnification vs Krea\'s zero'],
+      [true, '12,000+ credits/seat vs ~1,600 units/seat on Business plan'],
+      [true, 'Consistent Characters + One-Click Stories (Krea has neither)'],
+      [true, 'Contractual no-training commitment + IP protection'],
+      [false, 'Krea: LEGO, Samsung, Nike, Microsoft customer logos'],
+      [false, 'Krea: Real-time generation (unique capability)'],
+      [false, 'Krea: No SOC 2 or ISO 27001'],
+    ],
+    glossary: [
+      ['Real-time generation', 'AI image generation that updates instantly as you adjust parameters (vs batch where you submit and wait)'],
+      ['Compute units', "Krea's credit equivalent — consumed when generating content"],
+      ['Team-based pricing', 'One price for the team (not per-seat) — watch the compute allocation per person'],
+    ],
+    killerQuote: { text: '"Zero customer service support. No contact form, no email, no phone number — nothing."', source: 'gstory.ai, 2026' },
+  },
+
+  'ltx-studio': {
+    name: 'LTX Studio',
+    glance: [
+      ['Company', 'LTX by Lightricks (Jerusalem, Israel) — ~500 employees, profitable'],
+      ['Focus', 'AI video production platform'],
+      ['Enterprise Pricing', 'Custom (unlimited credits, unlimited collaborators)'],
+      ['Model Approach', 'Proprietary LTX-2 / LTXV model family'],
+      ['Compliance', 'SOC 2 Type II, ISO 27001:2022, PCI DSS, GDPR, CCPA — strongest in AI video'],
+      ['IP Indemnification', 'Not publicly documented'],
+      ['Key Strength', 'Best compliance posture among AI creative tool competitors'],
+    ],
+    wins: [
+      { title: 'Full Creative Suite vs Video Only', desc: "LTX Studio is a video platform. OpenArt covers images, video, consistent characters, personalized models, and one-click stories. LTX can't generate a product image or a brand character.", why: 'Creative teams work across all formats. A video-only tool is only part of the solution.' },
+      { title: '100+ Models vs One Proprietary Family', desc: "LTX runs on proprietary LTX-2/LTXV. OpenArt integrates 100+ from every major provider. If a better video model drops tomorrow, OpenArt will have it.", why: 'Proprietary-only platforms bet on one model. Multi-model platforms give your team the best of everything.' },
+      { title: 'Speed of Innovation', desc: "OpenArt ships every 2-3 weeks with 20 people. LTX, as part of a 500-person company, moves at a more traditional pace.", why: 'Build-your-own vs integrate-the-best. OpenArt is faster and more diverse.' },
+      { title: '$1M IP Indemnification vs None Documented', desc: 'LTX has not publicly documented IP indemnification terms. OpenArt provides $1M coverage.', why: 'Even with the best compliance certs, no IP indemnification is a procurement gap.' },
+    ],
+    diffs: [
+      { title: 'Best compliance in the category', desc: 'SOC 2 Type II, ISO 27001:2022, PCI DSS, GDPR, CCPA — the gold standard' },
+      { title: 'Unlimited credits and collaborators', desc: 'Enterprise plan has no credit limits' },
+      { title: 'Brand Kit', desc: 'Centralized brand governance across multiple identities' },
+      { title: 'Built-in localization', desc: 'Dubbing and captions for multi-market content' },
+    ],
+    objections: [
+      ['"LTX has SOC 2 Type II and ISO 27001."', "They do — impressive. We're on that roadmap. But compliance certifications don't generate creative content. Your team also needs 100+ models, consistent characters, custom training, and a platform covering images, video, and stories. LTX only does video."],
+      ['"LTX offers unlimited credits."', "Unlimited credits on a single-model video platform vs 12,000+ per seat across 100+ models for images, video, characters, and stories. Unlimited on one thing vs generous across everything."],
+      ['"LTX has Brand Kit."', "Good feature for video governance. OpenArt's Consistent Characters and Personalized Models go further — custom AI models trained on your brand assets that ensure every generation is on-brand, across images and video."],
+      ['"Lightricks is profitable and established."', "So is our economics — $70M ARR with 20 people. But which product does your team love? 8M monthly users and 7x revenue growth says a lot about product-market fit."],
+    ],
+    talkTrack: "LTX Studio has the best compliance certs in the AI creative space — no question. If SOC 2 Type II is a hard day-one requirement and nothing else matters, LTX is worth evaluating. But here's the trade-off: LTX is video-only, one proprietary model family, and no documented IP indemnification. OpenArt gives your team 100+ models across images, video, characters, and stories, $1M IP protection, and an engineering team that ships faster than anyone — a major release every 2-3 weeks. The question is: do you want certifications on a narrow tool, or the full creative platform your team will actually adopt and love?",
+    proofPoints: [
+      [true, 'Full creative suite vs LTX\'s video-only scope'],
+      [true, '100+ models vs LTX\'s single proprietary family'],
+      [true, '$1M IP indemnification vs none documented'],
+      [true, 'Major release every 2-3 weeks (fastest in industry)'],
+      [true, '8M MAU, 230K paying, 7x growth'],
+      [false, 'LTX: SOC 2 Type II + ISO 27001:2022 + PCI DSS (best compliance)'],
+      [false, 'LTX: Unlimited credits and collaborators on enterprise'],
+      [false, 'LTX: Brand Kit and built-in localization'],
+    ],
+    glossary: [
+      ['LTX-2 / LTXV', "Lightricks' proprietary video generation model"],
+      ['Brand Kit', 'Centralized brand asset management — logos, colors, fonts — enforced across productions'],
+      ['PCI DSS', 'Payment Card Industry Data Security Standard'],
+      ['Localization', 'Adapting content for different markets — dubbing audio, translating captions'],
+    ],
+    killerQuote: { text: '"THE COMPUTING SECONDS. THE AMOUNT OF PAIN THEY CAUSE MAKES ME SAD. I HATE THEM."', source: 'Trustpilot, 2025-2026' },
+  },
+};
+
+// Render the card
+function renderCard() {
+  const params = new URLSearchParams(window.location.search);
+  const comp = params.get('competitor');
+  const card = CARDS[comp];
+
+  if (!card) {
+    document.getElementById('mainContent').innerHTML = '<h2 style="margin-top:40px;">Card not found</h2><p style="color:var(--text-secondary);">Please select a competitor from the <a href="index.html" style="color:var(--green);">landing page</a>.</p>';
+    return;
+  }
+
+  document.title = `OpenArt vs ${card.name} — Battle Card`;
+
+  // Breadcrumb
+  document.getElementById('breadcrumb').innerHTML = `<a href="index.html">Battle Cards</a> &nbsp;→&nbsp; OpenArt vs ${card.name}`;
+
+  // Build main content
+  let html = '';
+
+  // Title
+  html += `<h1 class="card-title">OpenArt vs <em>${card.name}</em></h1>`;
+
+  // At a Glance
+  html += `<div class="content-section"><h2>${card.name} at a Glance</h2><table class="glance-table">`;
+  card.glance.forEach(([label, value]) => {
+    html += `<tr><td>${label}</td><td>${value}</td></tr>`;
+  });
+  html += `</table>`;
+
+  // Killer quote
+  if (card.killerQuote) {
+    html += `<div class="killer-quote">${card.killerQuote.text}<cite>— ${card.killerQuote.source}</cite></div>`;
+  }
+  html += `</div>`;
+
+  // Where We Win
+  html += `<div class="content-section"><h2>Where We Win</h2>`;
+  card.wins.forEach(w => {
+    html += `<div class="win-item"><h3><span class="check">&#10003;</span> ${w.title}</h3><p>${w.desc}</p><div class="why">Why this matters: ${w.why}</div></div>`;
+  });
+  html += `</div>`;
+
+  // Where They Differentiate
+  html += `<div class="content-section"><h2>Where They Differentiate</h2>`;
+  card.diffs.forEach(d => {
+    html += `<div class="diff-item"><h3><span class="warn">&#9888;</span> ${d.title}</h3><p>${d.desc}</p></div>`;
+  });
+  html += `</div>`;
+
+  // Objection Handling
+  html += `<div class="content-section"><h2>Objection Handling</h2><table class="objection-table"><thead><tr><th>They Say</th><th>You Say</th></tr></thead><tbody>`;
+  card.objections.forEach(([they, you]) => {
+    html += `<tr><td>${they}</td><td>${you}</td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+
+  // Talk Track
+  html += `<div class="content-section"><h2>Talk Track</h2><div class="talk-track" id="talkTrack"><button class="copy-btn" onclick="copyTalkTrack()" id="copyBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy</button>${card.talkTrack}</div></div>`;
+
+  // Key Proof Points
+  html += `<div class="content-section"><h2>Key Proof Points</h2><ul class="proof-list">`;
+  card.proofPoints.forEach(([isOurs, text]) => {
+    const cls = isOurs ? 'bullet-green' : 'bullet-amber';
+    const icon = isOurs ? '&#10003;' : '&#9679;';
+    html += `<li><span class="bullet ${cls}">${icon}</span> ${text}</li>`;
+  });
+  html += `</ul></div>`;
+
+  // Glossary
+  html += `<div class="glossary-section"><details><summary>Glossary</summary><div class="accordion-body">`;
+  card.glossary.forEach(([term, def]) => {
+    html += `<div class="glossary-item"><strong>${term}</strong> — <span>${def}</span></div>`;
+  });
+  html += `</div></details></div>`;
+
+  // Prev/Next navigation
+  const idx = COMP_ORDER.indexOf(comp);
+  const prev = idx > 0 ? COMP_ORDER[idx - 1] : null;
+  const next = idx < COMP_ORDER.length - 1 ? COMP_ORDER[idx + 1] : null;
+
+  html += `<div class="card-nav">`;
+  if (prev) {
+    html += `<a href="card.html?competitor=${prev}"><div class="nav-label">&#8592; Previous</div><div class="nav-name">${CARDS[prev].name}</div></a>`;
+  } else {
+    html += `<div></div>`;
+  }
+  if (next) {
+    html += `<a href="card.html?competitor=${next}" class="next"><div class="nav-label">Next &#8594;</div><div class="nav-name">${CARDS[next].name}</div></a>`;
+  }
+  html += `</div>`;
+
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+// Copy talk track
+function copyTalkTrack() {
+  const params = new URLSearchParams(window.location.search);
+  const card = CARDS[params.get('competitor')];
+  if (!card) return;
+  navigator.clipboard.writeText(card.talkTrack).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.classList.add('copied');
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Copied!';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy';
+    }, 2000);
+  });
+}
+
+checkAuth();
+renderCard();
+</script>
+
+</body>
+</html>
